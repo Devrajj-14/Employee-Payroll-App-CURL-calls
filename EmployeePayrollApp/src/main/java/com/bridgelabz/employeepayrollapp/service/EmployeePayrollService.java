@@ -6,39 +6,61 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * UC4: Service implementation for Employee Payroll.
- * Contains business logic, delegated from the controller.
- * Storage will be enhanced in UC5 with local list.
+ * UC5: Service implementation with in-memory List storage.
+ * Stores Employee Payroll data in a local ArrayList.
+ * Uses AtomicLong for safe auto-increment of employee IDs.
  */
 @Service
 public class EmployeePayrollService implements IEmployeePayrollService {
 
+    private final List<EmployeePayrollData> employeeList = new ArrayList<>();
+    private final AtomicLong idCounter = new AtomicLong(1);
+
     @Override
     public List<EmployeePayrollData> getAllEmployees() {
-        List<EmployeePayrollData> employees = new ArrayList<>();
-        employees.add(new EmployeePayrollData(1L, "Sample Employee", 50000.0));
-        return employees;
+        return employeeList;
     }
 
     @Override
     public EmployeePayrollData getEmployeeById(long employeeId) {
-        return new EmployeePayrollData(employeeId, "Sample Employee " + employeeId, 50000.0);
+        return employeeList.stream()
+                .filter(emp -> emp.getEmployeeId() == employeeId)
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
     public EmployeePayrollData createEmployee(EmployeePayrollDTO employeeDTO) {
-        return new EmployeePayrollData(1L, employeeDTO.getName(), employeeDTO.getSalary());
+        EmployeePayrollData employee = new EmployeePayrollData(
+                idCounter.getAndIncrement(),
+                employeeDTO.getName(),
+                employeeDTO.getSalary()
+        );
+        employeeList.add(employee);
+        return employee;
     }
 
     @Override
     public EmployeePayrollData updateEmployee(long employeeId, EmployeePayrollDTO employeeDTO) {
-        return new EmployeePayrollData(employeeId, employeeDTO.getName(), employeeDTO.getSalary());
+        EmployeePayrollData existingEmployee = getEmployeeById(employeeId);
+        if (existingEmployee != null) {
+            existingEmployee.setName(employeeDTO.getName());
+            existingEmployee.setSalary(employeeDTO.getSalary());
+            return existingEmployee;
+        }
+        return null;
     }
 
     @Override
     public String deleteEmployee(long employeeId) {
-        return "Employee with id " + employeeId + " deleted successfully";
+        EmployeePayrollData employee = getEmployeeById(employeeId);
+        if (employee != null) {
+            employeeList.remove(employee);
+            return "Employee with id " + employeeId + " deleted successfully";
+        }
+        return "Employee with id " + employeeId + " not found";
     }
 }
