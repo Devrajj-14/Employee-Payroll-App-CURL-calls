@@ -6,41 +6,65 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * UC4: Service implementation for Address Book.
- * Contains business logic, delegated from the controller.
- * Placeholder logic for now; UC5 will add in-memory list storage.
+ * UC5: Service implementation with in-memory List storage.
+ * Stores Address Book data in a local ArrayList.
+ * Uses AtomicLong for safe auto-increment of person IDs.
  */
 @Service
 public class AddressBookService implements IAddressBookService {
 
+    private final List<AddressBookData> contactList = new ArrayList<>();
+    private final AtomicLong idCounter = new AtomicLong(1);
+
     @Override
     public List<AddressBookData> getAllContacts() {
-        List<AddressBookData> contacts = new ArrayList<>();
-        contacts.add(new AddressBookData(1L, "Sample Contact", "MG Road", "Bengaluru", "9876543210"));
-        return contacts;
+        return contactList;
     }
 
     @Override
     public AddressBookData getContactById(long personId) {
-        return new AddressBookData(personId, "Sample Contact " + personId, "MG Road", "Bengaluru", "9876543210");
+        return contactList.stream()
+                .filter(contact -> contact.getPersonId() == personId)
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
     public AddressBookData createContact(AddressBookDTO contactDTO) {
-        return new AddressBookData(1L, contactDTO.getName(),
-                contactDTO.getAddress(), contactDTO.getCity(), contactDTO.getPhoneNumber());
+        AddressBookData contact = new AddressBookData(
+                idCounter.getAndIncrement(),
+                contactDTO.getName(),
+                contactDTO.getAddress(),
+                contactDTO.getCity(),
+                contactDTO.getPhoneNumber()
+        );
+        contactList.add(contact);
+        return contact;
     }
 
     @Override
     public AddressBookData updateContact(long personId, AddressBookDTO contactDTO) {
-        return new AddressBookData(personId, contactDTO.getName(),
-                contactDTO.getAddress(), contactDTO.getCity(), contactDTO.getPhoneNumber());
+        AddressBookData existingContact = getContactById(personId);
+        if (existingContact != null) {
+            existingContact.setName(contactDTO.getName());
+            existingContact.setAddress(contactDTO.getAddress());
+            existingContact.setCity(contactDTO.getCity());
+            existingContact.setPhoneNumber(contactDTO.getPhoneNumber());
+            return existingContact;
+        }
+        return null;
     }
 
     @Override
     public String deleteContact(long personId) {
-        return "Contact with id " + personId + " deleted successfully";
+        AddressBookData contact = getContactById(personId);
+        if (contact != null) {
+            contactList.remove(contact);
+            return "Contact with id " + personId + " deleted successfully";
+        }
+        return "Contact with id " + personId + " not found";
     }
 }
