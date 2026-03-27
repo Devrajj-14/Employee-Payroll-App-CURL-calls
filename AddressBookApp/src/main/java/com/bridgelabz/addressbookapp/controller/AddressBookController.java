@@ -2,27 +2,30 @@ package com.bridgelabz.addressbookapp.controller;
 
 import com.bridgelabz.addressbookapp.dto.AddressBookDTO;
 import com.bridgelabz.addressbookapp.model.AddressBookData;
+import com.bridgelabz.addressbookapp.service.IAddressBookService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * UC3: REST Controller updated to use AddressBookDTO and AddressBookData model.
- * Uses ResponseEntity for all responses.
+ * UC4: REST Controller with Service Layer injection.
+ * All business logic is delegated to IAddressBookService via @Autowired.
  */
 @RestController
 @RequestMapping("/addressbook")
 public class AddressBookController {
+
+    @Autowired
+    private IAddressBookService addressBookService;
 
     /**
      * GET all contacts
      */
     @GetMapping("/")
     public ResponseEntity<List<AddressBookData>> getAllContacts() {
-        List<AddressBookData> contacts = new ArrayList<>();
-        contacts.add(new AddressBookData(1L, "Sample Contact", "MG Road", "Bengaluru", "9876543210"));
+        List<AddressBookData> contacts = addressBookService.getAllContacts();
         return ResponseEntity.ok(contacts);
     }
 
@@ -31,7 +34,7 @@ public class AddressBookController {
      */
     @GetMapping("/get/{id}")
     public ResponseEntity<AddressBookData> getContactById(@PathVariable long id) {
-        AddressBookData contact = new AddressBookData(id, "Sample Contact " + id, "MG Road", "Bengaluru", "9876543210");
+        AddressBookData contact = addressBookService.getContactById(id);
         return ResponseEntity.ok(contact);
     }
 
@@ -40,8 +43,7 @@ public class AddressBookController {
      */
     @PostMapping("/create")
     public ResponseEntity<AddressBookData> createContact(@RequestBody AddressBookDTO contactDTO) {
-        AddressBookData contact = new AddressBookData(1L, contactDTO.getName(),
-                contactDTO.getAddress(), contactDTO.getCity(), contactDTO.getPhoneNumber());
+        AddressBookData contact = addressBookService.createContact(contactDTO);
         return ResponseEntity.ok(contact);
     }
 
@@ -50,8 +52,7 @@ public class AddressBookController {
      */
     @PutMapping("/update/{id}")
     public ResponseEntity<AddressBookData> updateContact(@PathVariable long id, @RequestBody AddressBookDTO contactDTO) {
-        AddressBookData updatedContact = new AddressBookData(id, contactDTO.getName(),
-                contactDTO.getAddress(), contactDTO.getCity(), contactDTO.getPhoneNumber());
+        AddressBookData updatedContact = addressBookService.updateContact(id, contactDTO);
         return ResponseEntity.ok(updatedContact);
     }
 
@@ -60,6 +61,7 @@ public class AddressBookController {
      */
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteContact(@PathVariable long id) {
-        return ResponseEntity.ok("Contact with id " + id + " deleted successfully");
+        String message = addressBookService.deleteContact(id);
+        return ResponseEntity.ok(message);
     }
 }
