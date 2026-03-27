@@ -1,52 +1,67 @@
 package com.bridgelabz.employeepayrollapp.controller;
 
+import com.bridgelabz.employeepayrollapp.dto.EmployeePayrollDTO;
+import com.bridgelabz.employeepayrollapp.model.EmployeePayrollData;
+import com.bridgelabz.employeepayrollapp.service.IEmployeePayrollService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
- * UC2: REST Controller demonstrating all HTTP methods for Employee Payroll.
- * At this stage, the focus is on controller connectivity and data transfer.
+ * UC4: REST Controller with Service Layer injection.
+ * All business logic is delegated to IEmployeePayrollService via @Autowired.
  */
 @RestController
 @RequestMapping("/employeepayrollservice")
 public class EmployeePayrollController {
 
+    @Autowired
+    private IEmployeePayrollService employeePayrollService;
+
     /**
      * GET all employees
      */
     @GetMapping("/")
-    public String getEmployees() {
-        return "GET: Employee Payroll Service is running - returning all employees";
+    public ResponseEntity<List<EmployeePayrollData>> getEmployees() {
+        List<EmployeePayrollData> employees = employeePayrollService.getAllEmployees();
+        return ResponseEntity.ok(employees);
     }
 
     /**
      * GET employee by ID
      */
     @GetMapping("/get/{id}")
-    public String getEmployeeById(@PathVariable long id) {
-        return "GET: Fetching Employee with id: " + id;
+    public ResponseEntity<EmployeePayrollData> getEmployeeById(@PathVariable long id) {
+        EmployeePayrollData employee = employeePayrollService.getEmployeeById(id);
+        return ResponseEntity.ok(employee);
     }
 
     /**
-     * POST - create new employee
+     * POST - create new employee (accepts DTO, returns model)
      */
     @PostMapping("/create")
-    public String createEmployee(@RequestBody String employeeData) {
-        return "POST: Creating Employee with data: " + employeeData;
+    public ResponseEntity<EmployeePayrollData> createEmployee(@RequestBody EmployeePayrollDTO employeeDTO) {
+        EmployeePayrollData employee = employeePayrollService.createEmployee(employeeDTO);
+        return ResponseEntity.ok(employee);
     }
 
     /**
-     * PUT - update employee
+     * PUT - update employee (accepts DTO, returns updated model)
      */
     @PutMapping("/update")
-    public String updateEmployee(@RequestBody String employeeData) {
-        return "PUT: Updating Employee with data: " + employeeData;
+    public ResponseEntity<EmployeePayrollData> updateEmployee(@RequestBody EmployeePayrollDTO employeeDTO) {
+        EmployeePayrollData updatedEmployee = employeePayrollService.updateEmployee(0L, employeeDTO);
+        return ResponseEntity.ok(updatedEmployee);
     }
 
     /**
      * DELETE employee by ID
      */
     @DeleteMapping("/delete/{id}")
-    public String deleteEmployee(@PathVariable long id) {
-        return "DELETE: Deleting Employee with id: " + id;
+    public ResponseEntity<String> deleteEmployee(@PathVariable long id) {
+        String message = employeePayrollService.deleteEmployee(id);
+        return ResponseEntity.ok(message);
     }
 }
